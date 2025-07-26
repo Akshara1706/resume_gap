@@ -11,7 +11,7 @@ API_URL = "https://openrouter.ai/api/v1/chat/completions"
 HEADERS = {
     "Authorization": f"Bearer {OPENROUTER_API_KEY}",
     "Content-Type": "application/json",
-    "HTTP-Referer": "https://your-app.com"
+    "HTTP-Referer": "https://your-app.com"  # Optional but recommended
 }
 
 # ========== 📄 PDF TEXT EXTRACTION ==========
@@ -28,16 +28,20 @@ def extract_text_from_pdf(uploaded_file):
 def summarize_resume(resume_text):
     prompt = f"Summarize the following resume in 4-5 concise sentences:\n\n\"\"\"\n{resume_text}\n\"\"\""
     data = {
-        "model": "openai/gpt-3.5-turbo",
+        "model": "openrouter/openai/gpt-3.5-turbo",
         "messages": [
             {"role": "system", "content": "You are a professional resume summarizer."},
             {"role": "user", "content": prompt}
         ],
         "temperature": 0.5
     }
-    response = requests.post(API_URL, headers=HEADERS, json=data)
-    response.raise_for_status()
-    return response.json()["choices"][0]["message"]["content"]
+    try:
+        response = requests.post(API_URL, headers=HEADERS, json=data)
+        response.raise_for_status()
+        return response.json()["choices"][0]["message"]["content"]
+    except requests.exceptions.HTTPError as err:
+        st.error(f"❌ API Error (Summary): {err}")
+        return "API error while summarizing resume."
 
 # ========== 📊 AI GAP ANALYSIS ==========
 def analyze_resume_with_openrouter(resume_text, target_role):
@@ -51,16 +55,20 @@ Resume:
 \"\"\"{resume_text}\"\"\"
 """
     data = {
-        "model": "openai/gpt-3.5-turbo",
+        "model": "openrouter/openai/gpt-3.5-turbo",
         "messages": [
             {"role": "system", "content": "You are an expert resume analyst."},
             {"role": "user", "content": prompt}
         ],
         "temperature": 0.7
     }
-    response = requests.post(API_URL, headers=HEADERS, json=data)
-    response.raise_for_status()
-    return response.json()["choices"][0]["message"]["content"]
+    try:
+        response = requests.post(API_URL, headers=HEADERS, json=data)
+        response.raise_for_status()
+        return response.json()["choices"][0]["message"]["content"]
+    except requests.exceptions.HTTPError as err:
+        st.error(f"❌ API Error (Gap Analysis): {err}")
+        return "API error while performing gap analysis."
 
 # ========== ✅ MATCH VERDICT CHECK ==========
 def judge_resume_fit(resume_text, target_role):
@@ -72,16 +80,20 @@ Resume:
 \"\"\"{resume_text}\"\"\"
 """
     data = {
-        "model": "openai/gpt-3.5-turbo",
+        "model": "openrouter/openai/gpt-3.5-turbo",
         "messages": [
             {"role": "system", "content": "You are an expert HR evaluator."},
             {"role": "user", "content": prompt}
         ],
         "temperature": 0
     }
-    response = requests.post(API_URL, headers=HEADERS, json=data)
-    response.raise_for_status()
-    return response.json()["choices"][0]["message"]["content"].strip().upper()
+    try:
+        response = requests.post(API_URL, headers=HEADERS, json=data)
+        response.raise_for_status()
+        return response.json()["choices"][0]["message"]["content"].strip().upper()
+    except requests.exceptions.HTTPError as err:
+        st.error(f"❌ API Error (Match Verdict): {err}")
+        return "API error while checking job match."
 
 # ========== 💻 STREAMLIT UI ==========
 st.set_page_config(page_title="Resume Gap Analysis Agent", layout="centered")
